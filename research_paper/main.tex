@@ -1,0 +1,118 @@
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+\usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
+\begin{document}
+
+\title{Comparative Analysis of CNN-Based and Vision Transformer-Based Image Caption Generator Using Transformer Models\\
+}
+
+\author{\IEEEauthorblockN{Pradip Pokhrel}
+\IEEEauthorblockA{\textit{Department of Computer and Electronics Engineering} \\
+\textit{Thapathali Campus, Institute of Engineering}\\
+Kathmandu, Nepal \\
+pradippokhrel2060@gmail.com}
+\and
+\IEEEauthorblockN{Rohan Dhakal}
+\IEEEauthorblockA{\textit{Department of Computer and Electronics Engineering} \\
+\textit{Thapathali Campus, Institute of Engineering}\\
+Kathmandu, Nepal \\
+rohandhakal303@gmail.com}
+}
+
+\maketitle
+
+\begin{abstract}
+...
+\end{abstract}
+
+\begin{IEEEkeywords}
+...
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+Image captioning is a challenging multimodal task that aims to automatically generate natural language descriptions for images by combining techniques from Computer Vision (CV) and Natural Language Processing (NLP). Unlike traditional image classification or object detection tasks, image captioning requires a system to understand not only the objects present in an image but also their relationships, attributes, and contextual information in order to produce coherent and grammatically correct sentences. The ability to automatically describe visual scenes has become increasingly important due to its applications in assistive technologies for visually impaired individuals, intelligent image retrieval, autonomous vehicles, surveillance systems, robotics, social media content analysis, and human-computer interaction.
+
+Early image captioning systems relied on handcrafted visual features combined with template-based or retrieval-based sentence generation methods. Although these approaches produced syntactically correct captions, they lacked flexibility and often failed to generalize to unseen scenes. The rapid advancement of deep learning significantly transformed this field by introducing encoder-decoder architectures inspired by neural machine translation. In these architectures, Convolutional Neural Networks (CNNs) are employed as image encoders to extract high-level visual representations, while Recurrent Neural Networks (RNNs), particularly Long Short-Term Memory (LSTM) networks, generate captions sequentially.
+
+Despite achieving remarkable improvements over traditional methods, RNN-based decoders suffer from several limitations. Since captions are generated token by token, long-range dependencies are difficult to capture, training cannot be fully parallelized, and information from earlier words may gradually diminish. To overcome these challenges, the Transformer architecture was introduced, replacing recurrence with self-attention mechanisms that enable efficient modeling of global dependencies while allowing parallel computation during training. Transformer-based decoders have since become the dominant approach in modern image captioning systems.
+
+At the same time, significant progress has also occurred in visual feature extraction. CNN architectures such as ResNet remain highly effective at learning hierarchical local features through convolutional operations and have been widely adopted as image encoders. However, CNNs possess an inherent locality bias because convolution kernels process only limited receptive fields. Although deeper CNNs gradually capture larger contexts, modeling global relationships remains indirect.
+
+Vision Transformers (ViTs) have recently emerged as a powerful alternative by applying the Transformer architecture directly to image patches. Instead of relying on convolutional filters, ViTs divide an image into fixed-size patches, embed each patch into a sequence of tokens, and employ multi-head self-attention to learn global contextual relationships across the entire image. This architecture enables more effective modeling of long-range spatial dependencies and has demonstrated state-of-the-art performance across numerous computer vision tasks.
+
+While Vision Transformers have shown superior representational capabilities in many vision applications, they generally require larger computational resources and greater amounts of training data than CNN-based models. Consequently, understanding the practical trade-offs between CNN and ViT encoders in image captioning remains an important research problem, particularly for resource-constrained environments.
+
+This study presents a comparative analysis of two image captioning architectures that employ a common Transformer decoder while differing only in their visual encoder. The first architecture utilizes a pretrained ResNet encoder, whereas the second employs a pretrained Vision Transformer encoder. Using the Flickr30k benchmark dataset, both models are evaluated using standard caption generation metrics including BLEU-4, METEOR, ROUGE-L, CIDEr, and SPICE. In addition to caption quality, computational performance is analyzed through comparisons of model parameters, GPU memory consumption, convergence behavior, training time, and inference latency. By isolating the effect of the visual encoder while maintaining an identical language generation framework, this work provides a comprehensive evaluation of the strengths and limitations of CNN-based and Vision Transformer-based image captioning models.
+
+The major contributions of this paper are summarized as follows:
+
+\begin{itemize}
+    \item A comparative implementation of CNN-based (ResNet) and Vision Transformer-based image encoders using a common Transformer decoder.
+    \item Quantitative evaluation on the Flickr30k dataset using multiple caption quality metrics including BLEU-4, METEOR, ROUGE-L, CIDEr, and SPICE.
+    \item Comparative analysis of computational efficiency, including parameter count, GPU memory utilization, convergence rate, training time, and inference latency.
+    \item Discussion of the practical trade-offs between local feature extraction in CNNs and global contextual modeling in Vision Transformers for image caption generation.
+\end{itemize}
+
+\section{Literature Review}
+
+Image captioning has attracted significant attention over the past decade as one of the fundamental multimodal learning tasks that integrates computer vision and natural language processing. The objective is not merely to recognize objects within an image but also to understand their semantic relationships and generate coherent textual descriptions. The evolution of image captioning methods can be broadly categorized into template-based methods, retrieval-based approaches, encoder-decoder deep learning models, attention-based architectures, Transformer-based methods, and recent vision-language foundation models.
+
+Early image captioning systems primarily relied on handcrafted visual features extracted using techniques such as Scale-Invariant Feature Transform (SIFT), Histogram of Oriented Gradients (HOG), and bag-of-visual-words representations. These features were combined with predefined sentence templates or retrieval-based mechanisms to generate captions. Although these methods produced grammatically correct sentences, they lacked flexibility and were unable to generalize to images with unseen object combinations or complex visual scenes. Their dependence on manually designed rules significantly limited their scalability and practical applicability.
+
+The introduction of deep learning revolutionized image captioning. Vinyals \textit{et al.} proposed the Neural Image Caption (NIC) model, which introduced an encoder-decoder framework inspired by neural machine translation \cite{vinyals2015}. In this architecture, a pretrained GoogLeNet convolutional neural network extracted image features, while an LSTM decoder generated captions sequentially. This work demonstrated that visual representations learned by deep CNNs could be effectively translated into natural language descriptions and established the encoder-decoder paradigm that dominated image captioning research for several years.
+
+Although CNN-LSTM architectures achieved remarkable success, representing an entire image with a single feature vector limited their ability to describe complex scenes. To address this limitation, Xu \textit{et al.} proposed the Show, Attend and Tell model, introducing a soft attention mechanism that dynamically selected relevant image regions while generating each word \cite{xu2015}. Instead of relying on one global feature vector, the decoder learned to attend to different spatial locations depending on the generated word. This significantly improved caption quality and interpretability and inspired numerous subsequent attention-based captioning models.
+
+Several researchers further enhanced attention mechanisms. Anderson \textit{et al.} introduced Bottom-Up and Top-Down Attention, where object proposals generated by Faster R-CNN replaced regular CNN feature maps \cite{anderson2018}. This enabled the decoder to attend to semantically meaningful object regions rather than uniform spatial grids, substantially improving performance on benchmark datasets such as MS COCO. The model achieved state-of-the-art performance for several years and became one of the most influential image captioning architectures.
+
+While attention mechanisms improved CNN-LSTM models, recurrent neural networks still processed words sequentially, making training computationally expensive and limiting their ability to capture long-range dependencies. Vaswani \textit{et al.} addressed these issues through the Transformer architecture, which replaced recurrent operations with multi-head self-attention \cite{vaswani2017}. Self-attention allows every token in a sequence to interact directly with every other token, enabling better modeling of global dependencies while allowing highly parallelized training. The Transformer rapidly became the dominant architecture for sequence modeling tasks in natural language processing.
+
+Following its success in NLP, Transformer decoders were integrated into image captioning systems. Several studies demonstrated that Transformer-based decoders outperform recurrent decoders by generating more coherent and contextually consistent captions. Multi-head attention allows the decoder to selectively combine linguistic context with visual features, improving sentence fluency and reducing error propagation during caption generation.
+
+In parallel with advances in language modeling, CNN architectures also continued to evolve. Residual Networks (ResNet), introduced by He \textit{et al.}, addressed the degradation problem encountered when training very deep convolutional neural networks through residual skip connections \cite{he2016}. ResNet achieved remarkable success in image recognition tasks and rapidly became one of the most widely adopted visual encoders for image captioning due to its strong transfer learning capability and computational efficiency.
+
+A major paradigm shift in computer vision occurred with the introduction of the Vision Transformer (ViT) by Dosovitskiy \textit{et al.} \cite{dosovitskiy2021}. Unlike CNNs, Vision Transformers divide images into fixed-size patches and treat each patch as an input token to a Transformer encoder. Multi-head self-attention captures relationships among all image patches simultaneously, enabling the model to learn global contextual information directly. Vision Transformers demonstrated competitive or superior performance compared to CNNs on large-scale image classification benchmarks while exhibiting excellent scalability with increasing data and model size.
+
+The emergence of large-scale multimodal pretraining further accelerated progress in image captioning. Vision-language models such as BLIP \cite{li2022} and BLIP-2 \cite{li2023}, together with ViLBERT, VisualBERT, OSCAR, OFA, Flamingo, and GPT-4V, jointly learn visual and textual representations from millions of image-text pairs. These foundation models have achieved state-of-the-art performance across image captioning, visual question answering, image retrieval, and multimodal reasoning tasks. Nevertheless, their enormous computational requirements often restrict their deployment in real-world applications where memory, inference speed, and computational cost remain critical considerations.
+
+Although Vision Transformers have demonstrated impressive performance, CNN-based architectures continue to offer several practical advantages. CNNs possess strong inductive biases such as translation equivariance and locality, enabling them to learn effective visual representations even with relatively limited training data. They generally require fewer computational resources, consume less GPU memory, and provide faster inference compared with Vision Transformers. Conversely, Vision Transformers excel at modeling long-range spatial relationships but typically require larger datasets, longer training times, and greater computational resources to fully exploit their representational capacity.
+
+Recent comparative studies suggest that the superiority of CNNs or Vision Transformers often depends on dataset size, computational constraints, and downstream application requirements. However, relatively few studies have performed controlled comparisons in which only the visual encoder differs while the Transformer decoder, training strategy, dataset, optimization settings, and evaluation metrics remain identical. Such comparisons are essential for understanding the isolated contribution of different visual feature extraction mechanisms.
+
+Motivated by this research gap, this work performs a controlled comparative analysis between a pretrained ResNet encoder and a pretrained Vision Transformer encoder while employing an identical Transformer decoder architecture. Both models are trained and evaluated on the Flickr30k benchmark dataset using standard caption quality metrics, including BLEU-4, METEOR, ROUGE-L, CIDEr, and SPICE. Furthermore, computational efficiency is analyzed through comparisons of model parameters, GPU memory utilization, convergence speed, training time, and inference latency. The study aims to provide comprehensive insights into the trade-offs between CNN-based local feature extraction and Vision Transformer-based global contextual representation for modern image caption generation.
+
+%%\section{Methodology}
+
+%%\section{Experimental Setup}
+
+%%\subsection{Dataset}
+
+%%\subsection{Image Preprocessing}
+
+%%\subsection{CNN-Based Captioning Model}
+
+%%\subsection{Vision Transformer-Based Captioning Model}
+
+%%\subsection{Training Configuration}
+
+%%\section{Evaluation Metrics}
+
+%%\section{Experimental Results}
+
+%%\section{Discussion}
+
+%%\section{Conclusion and Future Work}
+
+\bibliographystyle{IEEEtran}
+\bibliography{main}
+\end{document}
+
+\end{document}
