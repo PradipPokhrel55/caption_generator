@@ -53,7 +53,7 @@ The major contributions of this paper are:
 
 \begin{itemize}
     \item A comparative implementation of ResNet-50 and ViT-B/16 visual encoders paired with an identical Transformer decoder under matched training conditions.
-    \item Quantitative evaluation on Flickr30k using BLEU-1--4, METEOR, ROUGE-L, and CIDEr metrics on 1,000 test images.
+    \item Quantitative evaluation on Flickr30k using BLEU-1--4, METEOR, ROUGE-L, and CIDEr metrics on 1{,}000 test images.
     \item Comparative analysis of computational efficiency, including encoder size, convergence rate, total training time, and inference latency.
     \item A discussion of the practical trade-offs between CNN local feature extraction and ViT global contextual modeling for image captioning.
 \end{itemize}
@@ -111,7 +111,7 @@ All images are resized to $224\times224$ pixels and normalized using ImageNet st
 
 \subsection{Training Configuration}
 
-Both models are optimized using Adam with a differential learning rate schedule: the pretrained encoder backbone is fine-tuned at $1\times10^{-5}$ while the projection head and the Transformer decoder are trained at $1\times10^{-4}$. The loss function is cross-entropy with padding positions ignored. Training uses a batch size of 16, a maximum of 100 epochs, and early stopping with patience of 5 epochs and a minimum improvement threshold of $1\times10^{-4}$ on the validation loss. All experiments are run on a single NVIDIA GPU.
+Both models are optimized using Adam with a differential learning rate schedule: the pretrained encoder backbone is fine-tuned at $1\times10^{-5}$ while the projection head and the Transformer decoder are trained at $1\times10^{-4}$. The loss function is cross-entropy with padding positions ignored. Training uses a batch size of 16, a maximum of 100 epochs, and early stopping with patience of 5 epochs and a minimum improvement threshold of $1\times10^{-4}$ on the validation loss. All experiments are run on a Kaggle cloud instance equipped with a Tesla P100 16\,GB GPU (CUDA 12.8, PyTorch 2.10.0, Python 3.12).
 
 \section{Evaluation Metrics}
 
@@ -131,7 +131,7 @@ Inference latency is measured as the average wall-clock time per image on the te
 
 \subsection{Caption Quality}
 
-Table~\ref{tab:results} reports caption quality scores on the 1{,}000 Flickr30k test images. The ViT-based model outperforms the CNN-based model on all BLEU variants and CIDEr, while achieving nearly identical METEOR and ROUGE-L scores.
+Table~\ref{tab:results} reports caption quality scores on the 1{,}000 Flickr30k test images. The ViT-based model outperforms the CNN-based model on all four BLEU variants and CIDEr. The ResNet-50 model achieves a marginally higher METEOR score (0.1983 vs.\ 0.1978), while both models produce identical ROUGE-L scores (0.4321) to four decimal places, indicating comparable sentence-level fluency.\footnote{The tied ROUGE-L values reflect the precision of the evaluation library's floating-point output; raw scores differ at the fifth decimal place.}
 
 \begin{table}[htbp]
 \caption{Caption quality comparison on Flickr30k test set (1{,}000 images)}
@@ -180,13 +180,13 @@ Both models begin with similar training losses (3.60 for ResNet-50, 3.58 for ViT
 
 \subsection{Qualitative Examples}
 
-Both models generate grammatically correct and semantically relevant captions for most test images. For example, on an image of a black-and-white dog running through grass, the ResNet-50 model generates \textit{``a black and white dog is jumping over a green and white toy in a grassy area''}, while the ViT model generates \textit{``a black and white dog runs through the grass with a black and white dog in the background.''}  The ViT caption more accurately describes the global scene layout, whereas the ResNet caption introduces an object not present in the image---illustrating the object hallucination tendency that has been documented in vision-language models \cite{li2023pope}. For images with multiple people or complex backgrounds, the ViT model more consistently captures group activities and scene-level context, which is consistent with ViT's stronger global feature modeling.
+Both models generate grammatically correct and semantically relevant captions for most test images. For example, on an image of a black-and-white dog running through grass, the ResNet-50 model generates \textit{``a black and white dog is jumping over a green and white toy in a grassy area''}, while the ViT model generates \textit{``a black and white dog runs through the grass with a black and white dog in the background.''}  In this instance, the ViT caption more accurately reflects the global scene layout, while the ResNet caption introduces a toy that is not visible in the image. For images with multiple people or complex backgrounds, the ViT model more frequently captures group activities and scene-level context, which is consistent with ViT's stronger global feature modeling.
 
 \section{Discussion}
 
 \subsection{Caption Quality}
 
-The ViT-B/16 encoder yields consistently higher BLEU scores than ResNet-50, suggesting that the global contextual representations learned through patch-level self-attention translate into more precise n-gram matches against reference captions. The improvement is modest (e.g., BLEU-4: $+0.0038$) but consistent across all four BLEU variants and CIDEr, indicating a systematic, rather than incidental, advantage. The near-identical METEOR and ROUGE-L scores indicate that both encoders produce captions of comparable fluency and recall, while the ViT model provides slightly higher precision of content words.
+The ViT-B/16 encoder yields consistently higher BLEU scores than ResNet-50, suggesting that the global contextual representations learned through patch-level self-attention translate into more precise n-gram matches against reference captions. The improvement is modest (e.g., BLEU-4: $+0.0038$, CIDEr: $+0.0004$) but consistent across all four BLEU variants and CIDEr, indicating a consistent but modest advantage rather than an incidental one. ResNet-50 achieves a marginally higher METEOR score (0.1983 vs.\ 0.1978), indicating that both encoders produce captions of comparable semantic alignment, with neither encoder dominating across all metrics.
 
 \subsection{Computational Trade-offs}
 
