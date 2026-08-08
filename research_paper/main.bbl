@@ -30,7 +30,7 @@ M.~A. Al-Malla, O.~Hamdoun, and N.~Ghneim, ``A comprehensive survey on deep
 H.~D. Abdulgalil and O.~A. Basir, ``Next-generation image captioning: A survey
   of methodologies and emerging challenges from transformers to multimodal
   large language models,'' \emph{Natural Language Processing Journal}, vol.~12,
-  p. 100159, 2025.
+  2025.
 
 \bibitem{vinyals2015}
 O.~Vinyals, A.~Toshev, S.~Bengio, and D.~Erhan, ``Show and tell: A neural image
@@ -56,12 +56,14 @@ A.~Dosovitskiy \emph{et~al.}, ``An image is worth 16x16 words: Transformers for
   image recognition at scale,'' \emph{ICLR}, 2021.
 
 \bibitem{li2022}
-J.~Li \emph{et~al.}, ``Blip: Bootstrapping language-image pre-training for
-  unified vision-language understanding and generation,'' \emph{ICML}, 2022.
+J.~Li, D.~Li, C.~Xiong, and S.~C.~H. Hoi, ``Blip: Bootstrapping language-image
+  pre-training for unified vision-language understanding and generation,''
+  \emph{ICML}, 2022.
 
 \bibitem{li2023}
-------, ``Blip-2: Bootstrapping language-image pre-training with frozen image
-  encoders and large language models,'' \emph{ICML}, 2023.
+J.~Li, D.~Li, S.~Savarese, and S.~C.~H. Hoi, ``Blip-2: Bootstrapping
+  language-image pre-training with frozen image encoders and large language
+  models,'' \emph{ICML}, 2023.
 
 \bibitem{zhu2023}
 D.~Zhu, J.~Chen, K.~Haydarov, X.~Shen, W.~Zhang, and M.~Elhoseiny, ``{ChatGPT}
@@ -78,26 +80,25 @@ Y.~Li, Y.~Du, K.~Zhou, J.~Wang, W.~X. Zhao, and J.-R. Wen, ``Evaluating object
 P.~Young, A.~Lai, M.~Hodosh, and J.~Hockenmaier, ``From image descriptions to
   visual denotations: New similarity metrics for semantic inference over event
   descriptions,'' \emph{Transactions of the Association for Computational
-  Linguistics}, vol.~2, pp. 67--78, 2014.
+  Linguistics}, vol.~2, 2014.
 
 \bibitem{papineni2002}
 K.~Papineni, S.~Roukos, T.~Ward, and W.-J. Zhu, ``{BLEU}: A method for
   automatic evaluation of machine translation,'' in \emph{Proceedings of the
-  40th Annual Meeting of the Association for Computational Linguistics}, 2002,
-  pp. 311--318.
+  40th Annual Meeting of the Association for Computational Linguistics}, 2002.
 
 \bibitem{banerjee2005}
 S.~Banerjee and A.~Lavie, ``{METEOR}: An automatic metric for {MT} evaluation
   with improved correlation with human judgments,'' in \emph{Proceedings of the
   ACL Workshop on Intrinsic and Extrinsic Evaluation Measures for Machine
-  Translation and/or Summarization}, 2005, pp. 65--72.
+  Translation and/or Summarization}, 2005.
 
 \bibitem{lin2004}
 C.-Y. Lin, ``{ROUGE}: A package for automatic evaluation of summaries,'' in
-  \emph{Text Summarization Branches Out}, 2004, pp. 74--81.
+  \emph{Text Summarization Branches Out}, 2004.
 
 \bibitem{vedantam2015}
 R.~Vedantam, C.~Lawrence~Zitnick, and D.~Parikh, ``{CIDEr}: Consensus-based
-  image description evaluation,'' in \emph{CVPR}, 2015, pp. 4566--4575.
+  image description evaluation,'' in \emph{CVPR}, 2015.
 
 \end{thebibliography}

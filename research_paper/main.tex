@@ -7,6 +7,7 @@
 \usepackage{textcomp}
 \usepackage{xcolor}
 \usepackage{booktabs}
+\usepackage{url}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
@@ -30,7 +31,7 @@ rohandhakal303@gmail.com}
 \maketitle
 
 \begin{abstract}
-Automatic image captioning requires the joint modeling of visual content and natural language, making the choice of visual encoder a critical architectural decision. This paper presents a controlled comparative analysis of two encoder-decoder image captioning systems that share an identical Transformer decoder but differ in their visual encoder: one employs a pretrained ResNet-50 convolutional neural network and the other uses a pretrained Vision Transformer (ViT-B/16). Both models are trained and evaluated on the Flickr30k benchmark dataset using standard caption quality metrics, including BLEU-1 through BLEU-4, METEOR, ROUGE-L, and CIDEr. The ViT-based model achieves marginally higher BLEU-4 (0.1679 vs.\ 0.1641) and CIDEr (0.3872 vs.\ 0.3868) scores, suggesting a modest improvement in global semantic coverage. However, the ResNet-based model converges in 172 minutes over 19 epochs, compared with 439 minutes over 21 epochs for ViT, representing a 2.5$\times$ reduction in training time. Inference latency is comparable for both models ($\approx$41--42\,ms per image). These results indicate that ViT encoders marginally outperform CNN encoders on global captioning quality, while CNN encoders offer substantially greater data and computational efficiency on moderate-scale datasets. This trade-off has direct implications for deploying image captioning in resource-constrained environments.
+Automatic image captioning requires the joint modeling of visual content and natural language, making the choice of visual encoder a critical architectural decision. This paper presents a controlled comparative analysis of two encoder-decoder image captioning systems that share an identical Transformer decoder but differ in their visual encoder: one employs a pretrained ResNet-50 convolutional neural network and the other uses a pretrained Vision Transformer (ViT-B/16). Both models are trained and evaluated on the Flickr30k benchmark dataset using standard caption quality metrics, including BLEU-1 through BLEU-4, METEOR, ROUGE-L, and CIDEr. The ViT-based model attains slightly higher BLEU-1 through BLEU-3 scores, but the ResNet-based model achieves stronger BLEU-4 (0.2074 vs.\ 0.2045), METEOR (0.1993 vs.\ 0.1984), ROUGE-L (0.4951 vs.\ 0.4914), and CIDEr (0.4263 vs.\ 0.4137), indicating better long-form n-gram consistency and overall caption consensus. In terms of efficiency, the ResNet-based model reaches convergence in 216.31 minutes over 24 epochs, compared with 500.44 minutes over 24 epochs for ViT, representing a 2.31$\times$ reduction in training time. Inference latency is comparable for both models (41.06 vs.\ 41.35\,ms per image). These results indicate that under the present training setup and dataset scale, a CNN encoder provides a stronger quality-efficiency trade-off than a ViT encoder.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -111,7 +112,7 @@ All images are resized to $224\times224$ pixels and normalized using ImageNet st
 
 \subsection{Training Configuration}
 
-Both models are optimized using Adam with a differential learning rate schedule: the pretrained encoder backbone is fine-tuned at $1\times10^{-5}$ while the projection head and the Transformer decoder are trained at $1\times10^{-4}$. The loss function is cross-entropy with padding positions ignored. Training uses a batch size of 16, a maximum of 100 epochs, and early stopping with patience of 5 epochs and a minimum improvement threshold of $1\times10^{-4}$ on the validation loss. All experiments are run on a Kaggle cloud instance equipped with a Tesla P100 16\,GB GPU (CUDA 12.8, PyTorch 2.10.0, Python 3.12).
+Both models are optimized using Adam with differential learning rates and weight decay selected through a preliminary Optuna-based hyperparameter search. For each model, 15 tuning trials are run for 2 epochs per trial, searching over encoder learning rate, projection learning rate, decoder learning rate, dropout, and weight decay. The selected ResNet configuration is: dropout $=0.1498$, encoder LR $=4.123\times10^{-5}$, projection LR $=2.6975\times10^{-4}$, decoder LR $=1.9844\times10^{-4}$, and weight decay $=4.208\times10^{-7}$. The selected ViT configuration is: dropout $=0.3234$, encoder LR $=3.293\times10^{-6}$, projection LR $=6.261\times10^{-5}$, decoder LR $=2.4166\times10^{-4}$, and weight decay $=5.762\times10^{-6}$. The loss function is cross-entropy with padding positions ignored. Final training uses a batch size of 16, a maximum of 100 epochs, and early stopping with patience of 5 epochs and a minimum improvement threshold of $1\times10^{-4}$ on the validation loss. All experiments are run on a Kaggle cloud instance equipped with a Tesla P100 16\,GB GPU (CUDA 12.8, PyTorch 2.10.0, Python 3.12).
 
 \section{Evaluation Metrics}
 
@@ -131,7 +132,7 @@ Inference latency is measured as the average wall-clock time per image on the te
 
 \subsection{Caption Quality}
 
-Table~\ref{tab:results} reports caption quality scores on the 1{,}000 Flickr30k test images. The ViT-based model outperforms the CNN-based model on all four BLEU variants and CIDEr. The ResNet-50 model achieves a marginally higher METEOR score (0.1983 vs.\ 0.1978), while both models produce identical ROUGE-L scores (0.4321) to four decimal places, indicating comparable sentence-level fluency.\footnote{The tied ROUGE-L values reflect the precision of the evaluation library's floating-point output; raw scores differ at the fifth decimal place.}
+Table~\ref{tab:results} reports caption quality scores on the 1{,}000 Flickr30k test images. The ViT-based model is slightly higher on BLEU-1 through BLEU-3, while the ResNet-50 model performs better on BLEU-4, METEOR, ROUGE-L, and CIDEr.
 
 \begin{table}[htbp]
 \caption{Caption quality comparison on Flickr30k test set (1{,}000 images)}
@@ -141,13 +142,13 @@ Table~\ref{tab:results} reports caption quality scores on the 1{,}000 Flickr30k 
 \toprule
 \textbf{Metric} & \textbf{ResNet-50} & \textbf{ViT-B/16} \\
 \midrule
-BLEU-1  & 0.5974 & \textbf{0.6081} \\
-BLEU-2  & 0.3870 & \textbf{0.3933} \\
-BLEU-3  & 0.2518 & \textbf{0.2562} \\
-BLEU-4  & 0.1641 & \textbf{0.1679} \\
-METEOR  & \textbf{0.1983} & 0.1978 \\
-ROUGE-L & 0.4321 & 0.4321 \\
-CIDEr   & 0.3868 & \textbf{0.3872} \\
+BLEU-1  & 0.6512 & \textbf{0.6592} \\
+BLEU-2  & 0.4408 & \textbf{0.4450} \\
+BLEU-3  & 0.3009 & \textbf{0.3018} \\
+BLEU-4  & \textbf{0.2074} & 0.2045 \\
+METEOR  & \textbf{0.1993} & 0.1984 \\
+ROUGE-L & \textbf{0.4951} & 0.4914 \\
+CIDEr   & \textbf{0.4263} & 0.4137 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -165,49 +166,55 @@ Table~\ref{tab:compute} summarizes the computational characteristics of both mod
 \textbf{Property} & \textbf{ResNet-50} & \textbf{ViT-B/16} \\
 \midrule
 Encoder weights      & 97.8\,MB   & 330\,MB    \\
-Training epochs      & 19         & 21         \\
-Best val.\ loss      & 2.4829     & 2.4665     \\
-Total training time  & 172.4\,min & 438.5\,min \\
-Avg.\ time / epoch   & $\approx$9.1\,min & $\approx$20.7\,min \\
-Avg.\ latency / image & 41.33\,ms & 42.02\,ms  \\
+Training epochs      & 24          & 24          \\
+Best val.\ loss      & 2.4721      & 2.4163      \\
+Total training time  & 216.31\,min & 500.44\,min \\
+Avg.\ time / epoch   & $\approx$9.01\,min & $\approx$20.85\,min \\
+Avg.\ latency / image & 41.06\,ms & 41.35\,ms  \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Training Convergence}
 
-Both models begin with similar training losses (3.60 for ResNet-50, 3.58 for ViT-B/16 at epoch 1) and converge to comparable final training losses ($\approx$2.12 and $\approx$1.99 respectively at their last epoch before early stopping). The ViT model achieves a marginally lower best validation loss (2.4665 vs.\ 2.4829), consistent with its slightly higher test-set metric scores. However, the ResNet-50 encoder achieves this near-equivalent convergence in less than 40\% of the wall-clock time required by the ViT encoder.
+Both models begin with similar training losses (3.4188 for ResNet-50, 3.3862 for ViT-B/16 at epoch 1) and run for 24 epochs before early stopping. At epoch 24, the final training losses are 2.0400 (ResNet-50) and 2.1130 (ViT-B/16). The ViT model reaches a lower best validation loss (2.4163 vs.\ 2.4721), but this does not translate into better corpus-level test metrics in this run. The ResNet-50 encoder also reaches its final model in substantially less wall-clock time (216.31 vs.\ 500.44 minutes).
 
 \subsection{Qualitative Examples}
 
-Both models generate grammatically correct and semantically relevant captions for most test images. For example, on an image of a black-and-white dog running through grass, the ResNet-50 model generates \textit{``a black and white dog is jumping over a green and white toy in a grassy area''}, while the ViT model generates \textit{``a black and white dog runs through the grass with a black and white dog in the background.''}  In this instance, the ViT caption more accurately reflects the global scene layout, while the ResNet caption introduces a toy that is not visible in the image. For images with multiple people or complex backgrounds, the ViT model more frequently captures group activities and scene-level context, which is consistent with ViT's stronger global feature modeling.
+Both models generate grammatically correct and semantically relevant captions for most test images. Qualitative inspection indicates that the two systems are often similar on simple scenes with one dominant subject, while differences are more noticeable on crowded or interaction-heavy images. These observations are consistent with the mixed quantitative results, where neither encoder dominates every metric.
 
 \section{Discussion}
 
 \subsection{Caption Quality}
 
-The ViT-B/16 encoder yields consistently higher BLEU scores than ResNet-50, suggesting that the global contextual representations learned through patch-level self-attention translate into more precise n-gram matches against reference captions. The improvement is modest (e.g., BLEU-4: $+0.0038$, CIDEr: $+0.0004$) but consistent across all four BLEU variants and CIDEr, indicating a consistent but modest advantage rather than an incidental one. ResNet-50 achieves a marginally higher METEOR score (0.1983 vs.\ 0.1978), indicating that both encoders produce captions of comparable semantic alignment, with neither encoder dominating across all metrics.
+The updated results show a split behavior across metrics. ViT-B/16 yields slightly higher BLEU-1 to BLEU-3 scores, which suggests stronger short n-gram overlap with references. However, ResNet-50 performs better on BLEU-4 ($+0.0029$), METEOR ($+0.0009$), ROUGE-L ($+0.0037$), and CIDEr ($+0.0126$), indicating stronger higher-order phrase consistency and better consensus with human references in this experiment. Overall, the gains are modest but coherent enough to favor ResNet-50 on aggregate caption quality.
 
 \subsection{Computational Trade-offs}
 
-Despite the marginal quality improvement, the ViT encoder introduces substantial computational overhead. The ViT-B/16 pretrained weights are 3.4$\times$ larger than ResNet-50 (330\,MB vs.\ 97.8\,MB), and the per-epoch training time is approximately 2.3$\times$ longer (20.7 vs.\ 9.1\,min), leading to a total training time overhead of 2.5$\times$ (438.5 vs.\ 172.4\,min). This difference arises from the quadratic self-attention complexity over 196 patch tokens in ViT-B/16 compared to the efficient convolutional forward pass of ResNet-50. Importantly, inference latency is nearly equal for both models (42.02 vs.\ 41.33\,ms per image), because at inference time the ViT encoder produces only a single CLS vector that is fed to the same decoder, eliminating any sequence-length overhead.
+Even with tuned hyperparameters, the ViT encoder introduces substantial computational overhead. The ViT-B/16 pretrained weights are 3.4$\times$ larger than ResNet-50 (330\,MB vs.\ 97.8\,MB), and the per-epoch training time is approximately 2.3$\times$ longer (20.85 vs.\ 9.01\,min), resulting in a total training time overhead of about 2.31$\times$ (500.44 vs.\ 216.31\,min). This difference is consistent with the higher computational burden of patch-level self-attention compared to convolutional feature extraction. Inference latency remains very similar for both models (41.35 vs.\ 41.06\,ms per image), so the main practical cost difference appears during training rather than deployment-time inference.
 
 \subsection{Data Efficiency and Inductive Bias}
 
-Flickr30k provides only 29{,}000 training images, a moderate-scale dataset by modern standards. CNNs embed two forms of inductive bias---locality (each filter covers a limited receptive field) and translation equivariance---that allow them to learn effective visual representations from relatively few examples. ViTs lack these biases and instead learn global spatial relationships purely from data, which is why they typically require much larger datasets (e.g., ImageNet-21k, JFT-300M) or strong regularization to match CNN performance \cite{dosovitskiy2021}. The fact that ViT-B/16 still slightly outperforms ResNet-50 on Flickr30k, despite the small dataset, is attributable to the quality of its ImageNet-1k pretrained representations. However, the narrow margin suggests that ResNet-50's data efficiency advantage significantly limits the gains that ViT can realize on moderate-scale captioning benchmarks.
+Flickr30k provides only 29{,}000 training images, a moderate-scale dataset by modern standards. CNNs embed two forms of inductive bias---locality (each filter covers a limited receptive field) and translation equivariance---that allow them to learn effective visual representations from relatively few examples. ViTs lack these biases and instead learn global spatial relationships more directly from data, which often requires larger datasets or stronger regularization to fully surpass CNNs \cite{dosovitskiy2021}. In this study, ViT-B/16 attains lower best validation loss, but ResNet-50 yields better BLEU-4/METEOR/ROUGE-L/CIDEr on the held-out test set. This suggests that on moderate-scale captioning data, CNN inductive biases still provide a meaningful generalization advantage.
 
 \subsection{Implications for Deployment}
 
-For applications where caption quality is the primary concern and large computational budgets are available---such as content indexing or accessibility services at scale---the ViT encoder offers a marginal but consistent quality advantage. For resource-constrained deployment scenarios (edge devices, real-time captioning, rapid prototyping), the ResNet-50 encoder provides essentially equivalent quality at substantially lower training cost, with comparable inference latency. These findings suggest that the choice between CNN and ViT encoders should be driven by the available training budget and dataset scale rather than inference requirements alone.
+For applications where training efficiency and practical model size are important, ResNet-50 is the more favorable encoder in this setup: it trains over 2$\times$ faster, uses much smaller encoder weights, and also achieves stronger BLEU-4, METEOR, ROUGE-L, and CIDEr. ViT-B/16 remains competitive and may still be attractive when short n-gram precision is prioritized or when scaling to much larger pretraining and finetuning datasets. In this experiment, however, the CNN-based encoder offers the stronger overall deployment trade-off.
 
 \section{Conclusion and Future Work}
 
-This paper presented a controlled comparative study of ResNet-50 and ViT-B/16 visual encoders within an identical encoder-decoder image captioning framework. Both models were trained and evaluated on Flickr30k under matched conditions. The ViT-B/16 encoder achieves marginally higher caption quality on most metrics (BLEU-4: 0.1679 vs.\ 0.1641; CIDEr: 0.3872 vs.\ 0.3868), consistent with its stronger global contextual modeling via patch-level self-attention. However, this improvement comes at the cost of 2.5$\times$ longer training time and a 3.4$\times$ larger encoder footprint, while inference latency remains comparable.
+This paper presented a controlled comparative study of ResNet-50 and ViT-B/16 visual encoders within an identical encoder-decoder image captioning framework. Both models were trained and evaluated on Flickr30k under matched data and decoder conditions with tuned optimization settings. The ViT-B/16 encoder achieved slightly higher BLEU-1 to BLEU-3, but ResNet-50 achieved stronger BLEU-4 (0.2074 vs.\ 0.2045), METEOR (0.1993 vs.\ 0.1984), ROUGE-L (0.4951 vs.\ 0.4914), and CIDEr (0.4263 vs.\ 0.4137). ResNet-50 also reduced total training time by approximately 2.31$\times$ (216.31 vs.\ 500.44 minutes) with a 3.4$\times$ smaller encoder footprint, while inference latency remained comparable.
 
-These results confirm that ViT encoders can outperform CNN encoders on global semantic coverage even on moderate-scale datasets, but the advantage is constrained by ViT's lack of CNN inductive biases, which reduces its data efficiency. On a dataset of the scale of Flickr30k, ResNet-50 offers a compelling efficiency--quality trade-off.
+These results indicate that, for Flickr30k-scale captioning, CNN inductive biases still provide a strong quality-efficiency balance relative to ViT-based encoding, even when both systems are tuned and trained under a unified framework.
 
 Future work will explore: (i) scaling to larger datasets such as MS COCO or CC3M to assess whether ViT's quality advantage widens with more data; (ii) beam search decoding to improve caption fluency for both models; (iii) attention map visualization to interpret which image regions each encoder emphasizes; (iv) fine-tuning BLIP-2 \cite{li2023} as a strong baseline for comparison; and (v) investigating encoder choices specifically for reducing hallucination, guided by evaluation protocols such as POPE \cite{li2023pope}.
 
 \bibliographystyle{IEEEtran}
 \bibliography{main}
+
+\appendices
+\section{Code Link}
+
+\url{https://github.com/PradipPokhrel55/caption_generator}
+
 \end{document}
