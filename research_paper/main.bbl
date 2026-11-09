@@ -21,49 +21,108 @@
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
+\bibitem{stefanini2023}
+M.~Stefanini, M.~Cornia, L.~Baraldi, S.~Cascianelli, G.~Fiameni, and
+  R.~Cucchiara, ``From show to tell: A survey on deep learning-based image
+  captioning,'' \emph{IEEE Transactions on Pattern Analysis and Machine
+  Intelligence}, vol.~45, no.~1, pp. 539--559, 2023.
+
 \bibitem{almalla2026}
 M.~A. Al-Malla, O.~Hamdoun, and N.~Ghneim, ``A comprehensive survey on deep
   learning approaches for image captioning: A systematic review,''
-  \emph{Journal of Big Data}, 2026, online first, in press.
-
-\bibitem{abdulgalil2025}
-H.~D. Abdulgalil and O.~A. Basir, ``Next-generation image captioning: A survey
-  of methodologies and emerging challenges from transformers to multimodal
-  large language models,'' \emph{Natural Language Processing Journal}, vol.~12,
-  2025.
+  \emph{Journal of Big Data}, vol.~13, no.~1, p.~48, 2026.
 
 \bibitem{vinyals2015}
 O.~Vinyals, A.~Toshev, S.~Bengio, and D.~Erhan, ``Show and tell: A neural image
-  caption generator,'' \emph{CVPR}, 2015.
+  caption generator,'' in \emph{Proceedings of the IEEE Conference on Computer
+  Vision and Pattern Recognition}, 2015, pp. 3156--3164.
 
 \bibitem{xu2015}
-K.~Xu \emph{et~al.}, ``Show, attend and tell: Neural image caption generation
-  with visual attention,'' \emph{ICML}, 2015.
+K.~Xu, J.~Ba, R.~Kiros, K.~Cho, A.~Courville, R.~Salakhutdinov, R.~Zemel, and
+  Y.~Bengio, ``Show, attend and tell: Neural image caption generation with
+  visual attention,'' in \emph{Proceedings of the 32nd International Conference
+  on Machine Learning}, vol.~37, 2015, pp. 2048--2057.
 
 \bibitem{anderson2018}
-P.~Anderson \emph{et~al.}, ``Bottom-up and top-down attention for image
-  captioning and visual question answering,'' \emph{CVPR}, 2018.
+P.~Anderson, X.~He, C.~Buehler, D.~Teney, M.~Johnson, S.~Gould, and L.~Zhang,
+  ``Bottom-up and top-down attention for image captioning and visual question
+  answering,'' in \emph{Proceedings of the IEEE Conference on Computer Vision
+  and Pattern Recognition}, 2018, pp. 6077--6086.
 
 \bibitem{vaswani2017}
-A.~Vaswani \emph{et~al.}, ``Attention is all you need,'' \emph{NeurIPS}, 2017.
+A.~Vaswani, N.~Shazeer, N.~Parmar, J.~Uszkoreit, L.~Jones, A.~N. Gomez,
+  L.~Kaiser, and I.~Polosukhin, ``Attention is all you need,'' in
+  \emph{Advances in Neural Information Processing Systems}, vol.~30, 2017, pp.
+  5998--6008.
 
 \bibitem{he2016}
 K.~He, X.~Zhang, S.~Ren, and J.~Sun, ``Deep residual learning for image
-  recognition,'' \emph{CVPR}, 2016.
+  recognition,'' in \emph{Proceedings of the IEEE Conference on Computer Vision
+  and Pattern Recognition}, 2016, pp. 770--778.
 
 \bibitem{dosovitskiy2021}
 A.~Dosovitskiy \emph{et~al.}, ``An image is worth 16x16 words: Transformers for
   image recognition at scale,'' \emph{ICLR}, 2021.
 
+\bibitem{cptr2021}
+W.~Liu, S.~Chen, L.~Guo, X.~Zhu, and J.~Liu, ``{CPTR}: Full transformer network
+  for image captioning,'' 2021.
+
+\bibitem{clipcap2021}
+R.~Mokady, A.~Hertz, and A.~H. Bermano, ``{ClipCap}: {CLIP} prefix for image
+  captioning,'' 2021.
+
+\bibitem{rstnet2021}
+X.~Zhang, X.~Sun, Y.~Luo, J.~Ji, Y.~Zhou, Y.~Wu, F.~Huang, and R.~Ji,
+  ``{RSTNet}: Captioning with adaptive attention on visual and non-visual
+  words,'' in \emph{Proceedings of the IEEE/CVF Conference on Computer Vision
+  and Pattern Recognition}, 2021.
+
+\bibitem{duallevel2021}
+Y.~Luo, J.~Ji, X.~Sun, L.~Cao, Y.~Wu, F.~Huang, C.-W. Lin, and R.~Ji,
+  ``Dual-level collaborative transformer for image captioning,'' in
+  \emph{Proceedings of the AAAI Conference on Artificial Intelligence},
+  vol.~35, no.~3, 2021, pp. 2286--2293.
+
+\bibitem{vinvl2021}
+P.~Zhang, X.~Li, X.~Hu, J.~Yang, L.~Zhang, L.~Wang, Y.~Choi, and J.~Gao,
+  ``{VinVL}: Revisiting visual representations in vision-language models,'' in
+  \emph{Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
+  Recognition}, 2021, pp. 5579--5588.
+
+\bibitem{hu2022}
+X.~Hu, Z.~Gan, J.~Wang, Z.~Yang, Z.~Liu, Y.~Lu, and L.~Wang, ``Scaling up
+  vision-language pre-training for image captioning,'' in \emph{Proceedings of
+  the IEEE/CVF Conference on Computer Vision and Pattern Recognition}, 2022,
+  pp. 17\,980--17\,989.
+
+\bibitem{nguyen2022}
+V.-Q. Nguyen, M.~Suganuma, and T.~Okatani, ``{GRIT}: Faster and better image
+  captioning transformer using dual visual features,'' in \emph{Computer Vision
+  -- ECCV 2022}, 2022, pp. 167--184.
+
+\bibitem{barraco2022}
+M.~Barraco, M.~Cornia, S.~Cascianelli, L.~Baraldi, and R.~Cucchiara, ``The
+  unreasonable effectiveness of {CLIP} features for image captioning: An
+  experimental analysis,'' in \emph{Proceedings of the IEEE/CVF Conference on
+  Computer Vision and Pattern Recognition Workshops}, 2022.
+
+\bibitem{jiang2020grid}
+H.~Jiang, I.~Misra, M.~Rohrbach, E.~Learned-Miller, and X.~Chen, ``In defense
+  of grid features for visual question answering,'' in \emph{Proceedings of the
+  IEEE/CVF Conference on Computer Vision and Pattern Recognition}, 2020.
+
 \bibitem{li2022}
 J.~Li, D.~Li, C.~Xiong, and S.~C.~H. Hoi, ``Blip: Bootstrapping language-image
-  pre-training for unified vision-language understanding and generation,''
-  \emph{ICML}, 2022.
+  pre-training for unified vision-language understanding and generation,'' in
+  \emph{Proceedings of the 39th International Conference on Machine Learning},
+  vol. 162, 2022, pp. 12\,888--12\,900.
 
 \bibitem{li2023}
 J.~Li, D.~Li, S.~Savarese, and S.~C.~H. Hoi, ``Blip-2: Bootstrapping
   language-image pre-training with frozen image encoders and large language
-  models,'' \emph{ICML}, 2023.
+  models,'' in \emph{Proceedings of the 40th International Conference on
+  Machine Learning}, vol. 202, 2023, pp. 19\,730--19\,742.
 
 \bibitem{zhu2023}
 D.~Zhu, J.~Chen, K.~Haydarov, X.~Shen, W.~Zhang, and M.~Elhoseiny, ``{ChatGPT}
@@ -80,25 +139,45 @@ Y.~Li, Y.~Du, K.~Zhou, J.~Wang, W.~X. Zhao, and J.-R. Wen, ``Evaluating object
 P.~Young, A.~Lai, M.~Hodosh, and J.~Hockenmaier, ``From image descriptions to
   visual denotations: New similarity metrics for semantic inference over event
   descriptions,'' \emph{Transactions of the Association for Computational
-  Linguistics}, vol.~2, 2014.
+  Linguistics}, vol.~2, pp. 67--78, 2014.
+
+\bibitem{optuna2019}
+T.~Akiba, S.~Sano, T.~Yanase, T.~Ohta, and M.~Koyama, ``Optuna: A
+  next-generation hyperparameter optimization framework,'' in \emph{Proceedings
+  of the 25th ACM SIGKDD International Conference on Knowledge Discovery and
+  Data Mining}, 2019, pp. 2623--2631.
+
+\bibitem{chen2015coco}
+X.~Chen, H.~Fang, T.-Y. Lin, R.~Vedantam, S.~Gupta, P.~Doll{\'a}r, and C.~L.
+  Zitnick, ``Microsoft {COCO} captions: Data collection and evaluation
+  server,'' 2015.
+
+\bibitem{clipscore2021}
+J.~Hessel, A.~Holtzman, M.~Forbes, R.~Le~Bras, and Y.~Choi, ``{CLIPScore}: A
+  reference-free evaluation metric for image captioning,'' in \emph{Proceedings
+  of the 2021 Conference on Empirical Methods in Natural Language Processing},
+  2021, pp. 7514--7528.
 
 \bibitem{papineni2002}
 K.~Papineni, S.~Roukos, T.~Ward, and W.-J. Zhu, ``{BLEU}: A method for
   automatic evaluation of machine translation,'' in \emph{Proceedings of the
-  40th Annual Meeting of the Association for Computational Linguistics}, 2002.
+  40th Annual Meeting of the Association for Computational Linguistics}, 2002,
+  pp. 311--318.
 
 \bibitem{banerjee2005}
 S.~Banerjee and A.~Lavie, ``{METEOR}: An automatic metric for {MT} evaluation
   with improved correlation with human judgments,'' in \emph{Proceedings of the
   ACL Workshop on Intrinsic and Extrinsic Evaluation Measures for Machine
-  Translation and/or Summarization}, 2005.
+  Translation and/or Summarization}, 2005, pp. 65--72.
 
 \bibitem{lin2004}
 C.-Y. Lin, ``{ROUGE}: A package for automatic evaluation of summaries,'' in
-  \emph{Text Summarization Branches Out}, 2004.
+  \emph{Proceedings of the ACL Workshop on Text Summarization Branches Out},
+  2004, pp. 74--81.
 
 \bibitem{vedantam2015}
 R.~Vedantam, C.~Lawrence~Zitnick, and D.~Parikh, ``{CIDEr}: Consensus-based
-  image description evaluation,'' in \emph{CVPR}, 2015.
+  image description evaluation,'' in \emph{Proceedings of the IEEE Conference
+  on Computer Vision and Pattern Recognition}, 2015, pp. 4566--4575.
 
 \end{thebibliography}

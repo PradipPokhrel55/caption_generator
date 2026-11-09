@@ -8,6 +8,8 @@
 \usepackage{xcolor}
 \usepackage{booktabs}
 \usepackage{url}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
@@ -31,7 +33,7 @@ rohandhakal303@gmail.com}
 \maketitle
 
 \begin{abstract}
-Automatic image captioning requires the joint modeling of visual content and natural language, making the choice of visual encoder a critical architectural decision. This paper presents a controlled comparative analysis of two encoder-decoder image captioning systems that share an identical Transformer decoder but differ in their visual encoder: one employs a pretrained ResNet-50 convolutional neural network and the other uses a pretrained Vision Transformer (ViT-B/16). Both models are trained and evaluated on the Flickr30k benchmark dataset using standard caption quality metrics, including BLEU-1 through BLEU-4, METEOR, ROUGE-L, and CIDEr. The ViT-based model attains slightly higher BLEU-1 through BLEU-3 scores, but the ResNet-based model achieves stronger BLEU-4 (0.2074 vs.\ 0.2045), METEOR (0.1993 vs.\ 0.1984), ROUGE-L (0.4951 vs.\ 0.4914), and CIDEr (0.4263 vs.\ 0.4137), indicating better long-form n-gram consistency and overall caption consensus. In terms of efficiency, the ResNet-based model reaches convergence in 216.31 minutes over 24 epochs, compared with 500.44 minutes over 24 epochs for ViT, representing a 2.31$\times$ reduction in training time. Inference latency is comparable for both models (41.06 vs.\ 41.35\,ms per image). These results indicate that under the present training setup and dataset scale, a CNN encoder provides a stronger quality-efficiency trade-off than a ViT encoder.
+Image captioning combines visual recognition with autoregressive language generation. This paper compares ResNet-50 and ViT-B/16 encoders using the same two-layer Transformer decoder and spatial memory: 49 projected CNN grid tokens or 196 projected ViT patch tokens. On the 1,000-image Flickr30k Karpathy test split, ViT has higher metric point estimates, including BLEU-4 (0.2251 vs.\ 0.2098) and CIDEr (0.4424 vs.\ 0.4192). A paired percentile bootstrap over test images found that the unadjusted 95\% intervals for ViT-minus-CNN differences excluded zero for BLEU-3 and BLEU-4, but not the other five metrics. ResNet trained in 188.5 minutes over 22 epochs, compared with 492.27 minutes for ViT; mean greedy-decoding latency was 36.01 ms/image for ResNet and 37.55 ms/image for ViT. Since each architecture was trained with one seed, these intervals quantify test-image sampling uncertainty only and not training-run variability. The results show a quality--compute trade-off for this dataset and implementation, not a universal encoder ranking.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -48,42 +50,72 @@ Despite remarkable improvements, RNN-based decoders suffer from difficulties in 
 
 CNN architectures such as ResNet remain highly effective at learning hierarchical local features and are widely adopted as image encoders due to strong inductive biases for translation equivariance and locality. Vision Transformers (ViTs) have emerged as a powerful alternative by applying self-attention directly to sequences of image patches, enabling explicit modeling of long-range spatial dependencies. While ViTs have demonstrated state-of-the-art performance across many vision tasks, they generally require larger datasets and more computational resources than CNN-based models.
 
-This study presents a controlled comparative analysis of two image captioning architectures employing a common Transformer decoder while differing only in their visual encoder. The first architecture uses a pretrained ResNet-50 encoder; the second employs a pretrained ViT-B/16 encoder. Using the Flickr30k benchmark dataset, both models are evaluated on standard caption quality metrics including BLEU-4, METEOR, ROUGE-L, and CIDEr, along with training time, convergence behavior, and inference latency. By isolating the effect of the visual encoder, this work provides a comprehensive assessment of the trade-offs between CNN-based local feature extraction and Vision Transformer-based global contextual representation.
+This study compares pretrained ResNet-50 and ViT-B/16 encoders paired with an identical Transformer decoder on Flickr30k. Unlike a global-vector conditioning design, the decoder cross-attends to a sequence of projected spatial CNN or ViT patch features. We report standard automatic caption metrics, training time, validation-loss curves, model parameter counts, and greedy-decoding latency. The comparison is an empirical study of these encoder and tokenization choices under one training protocol; it does not introduce a new captioning architecture or establish performance beyond Flickr30k.
 
 The major contributions of this paper are:
 
 \begin{itemize}
-    \item A comparative implementation of ResNet-50 and ViT-B/16 visual encoders paired with an identical Transformer decoder under matched training conditions.
-    \item Quantitative evaluation on Flickr30k using BLEU-1--4, METEOR, ROUGE-L, and CIDEr metrics on 1{,}000 test images.
-    \item Comparative analysis of computational efficiency, including encoder size, convergence rate, total training time, and inference latency.
-    \item A discussion of the practical trade-offs between CNN local feature extraction and ViT global contextual modeling for image captioning.
+    \item A controlled implementation in which ResNet-50 grid tokens and ViT-B/16 patch tokens are supplied to the same Transformer decoder.
+    \item Evaluation on the 1{,}000-image Flickr30k Karpathy test split using BLEU-1--4, METEOR, ROUGE-L, and CIDEr.
+    \item Reporting of convergence, parameter counts, final training time, and greedy-decoding latency, with qualitative examples of both correct and erroneous captions.
 \end{itemize}
 
 \section{Literature Review}
 
-Image captioning integrates computer vision and natural language processing to automatically generate coherent textual descriptions of visual content \cite{almalla2026}. The field has evolved from early encoder-decoder models through attention-augmented architectures to recent vision-language foundation models \cite{abdulgalil2025}.
+Image captioning integrates computer vision and natural language processing to generate textual descriptions of visual content. Recent surveys review the transition from recurrent encoder--decoder systems to Transformer and vision--language models \cite{stefanini2023,almalla2026}.
 
 Vinyals \textit{et al.} introduced the Neural Image Caption (NIC) model, establishing the encoder-decoder paradigm by coupling a pretrained GoogLeNet encoder with an LSTM decoder \cite{vinyals2015}. Xu \textit{et al.} extended this framework with soft attention, enabling the decoder to focus on spatially relevant image regions at each generation step \cite{xu2015}. Anderson \textit{et al.} further improved caption quality by incorporating bottom-up attention over Faster R-CNN object proposals, achieving state-of-the-art performance on MS COCO \cite{anderson2018}.
 
 Vaswani \textit{et al.} introduced the Transformer, replacing sequential recurrence with multi-head self-attention to enable fully parallelized training and better modeling of long-range dependencies \cite{vaswani2017}. Transformer decoders rapidly superseded LSTM-based generators in image captioning by producing more fluent and contextually consistent captions. He \textit{et al.} introduced ResNet, addressing the degradation problem in very deep CNNs via residual skip connections, making ResNet-50 one of the most widely adopted visual encoders for captioning tasks \cite{he2016}.
 
-A major paradigm shift occurred with the Vision Transformer (ViT) of Dosovitskiy \textit{et al.}, which partitions images into fixed-size patches and applies Transformer self-attention across the patch sequence, enabling direct modeling of global contextual relationships \cite{dosovitskiy2021}. ViTs demonstrated competitive or superior image classification performance while exhibiting strong scalability with data and model size.
+A major paradigm shift occurred with the Vision Transformer (ViT), which partitions images into fixed-size patches and applies self-attention across the patch sequence \cite{dosovitskiy2021}. Captioning work has since explored full Transformer image encoders, including CPTR, and language-model conditioning approaches such as ClipCap \cite{cptr2021,clipcap2021}. Caption-specialized Transformer refinements include RSTNet and dual-level collaborative attention, while VinVL and later work scale vision--language pretraining or combine global and local visual features \cite{rstnet2021,duallevel2021,vinvl2021,hu2022,nguyen2022,barraco2022}. These systems are not directly comparable to our Flickr30k experiment because their datasets, pretraining, decoders, and training protocols differ. Grid-token representations have also been studied in adjacent vision-language tasks; for example, Jiang \textit{et al.} analyze grid features for visual question answering rather than caption generation \cite{jiang2020grid}.
 
-More recently, large-scale vision-language pretraining has pushed captioning performance substantially higher. BLIP \cite{li2022} introduced a bootstrapping strategy that unifies understanding and generation by filtering noisy web image-text pairs. BLIP-2 \cite{li2023} extended this approach by bridging frozen image encoders and frozen large language models (LLMs) via a lightweight Querying Transformer (Q-Former), enabling highly parameter-efficient multimodal pretraining. Zhu \textit{et al.} demonstrated that BLIP-2 can serve as a vision question-answering backbone in an interactive captioning pipeline (ChatCaptioner), identifying 53\% more objects than BLIP-2 alone and producing significantly more informative descriptions \cite{zhu2023}. Despite the impressive performance of these Multimodal Large Language Models (MLLMs), hallucination remains a critical challenge: models can generate plausible-sounding but factually incorrect descriptions of visual content. Li \textit{et al.} proposed the POPE benchmark specifically to evaluate object hallucination in large vision-language models, revealing that even state-of-the-art MLLMs systematically hallucinate objects not present in images \cite{li2023pope}. These findings emphasize the need to understand how different visual encoders contribute to grounding accuracy in caption generation.
+Large-scale vision--language pretraining has also advanced caption generation. BLIP uses filtered image--text data for unified understanding and generation, while BLIP-2 connects frozen image encoders and language models through a lightweight Querying Transformer \cite{li2022,li2023}. ChatCaptioner uses iterative question answering to enrich descriptions \cite{zhu2023}. Automatic overlap metrics do not directly measure object factuality; POPE provides a benchmark for object hallucination in vision--language models \cite{li2023pope}. These works motivate factuality analysis but are not baselines in the present experiment.
 
-Although ViTs have demonstrated strong representational capabilities, relatively few studies have performed fully controlled comparisons in which only the visual encoder differs while the Transformer decoder, vocabulary, training strategy, dataset, and evaluation protocol remain identical. Such controlled comparisons are essential for isolating the contribution of the visual feature extraction mechanism. Specifically, because ViT relies entirely on learned patch embeddings without the locality and translation-equivariance inductive biases built into CNNs, it is expected to model global scene semantics more effectively but to be less data-efficient than ResNet on moderate-scale datasets such as Flickr30k. Quantifying this trade-off under a controlled experimental design constitutes the central research gap addressed by this study.
+The present study addresses a narrower question than comparisons with large pretrained captioning systems: how two ImageNet-pretrained encoders perform when their spatial token sequences are projected to a common dimension and supplied to an otherwise shared decoder. This setup permits a controlled comparison of ResNet grid features and ViT patch features, but a single dataset and seed do not establish generalization or statistical significance.
 
 \section{Methodology}
 
 Both captioning systems adopt an encoder-decoder framework in which a visual encoder extracts image representations and a shared Transformer decoder generates captions autoregressively. The two systems differ solely in the visual encoder; all other components are identical.
 
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+    block/.style={draw, rounded corners, align=center, text width=2.45cm, minimum height=0.86cm, font=\footnotesize},
+    input/.style={draw, rounded corners, align=center, text width=1.55cm, minimum height=0.86cm, font=\footnotesize},
+    arrow/.style={-{Latex[length=2mm]}, thick}
+]
+\node[input] (cnnimage) at (0,1.15) {Input image\\$224\times224$};
+\node[block] (cnnencoder) at (2.65,1.15) {ResNet-50\\remove average pool and classifier};
+\node[block] (cnngrid) at (5.55,1.15) {$7\times7\times2048$ grid\\$1\times1$ projection + 2-D position};
+\node[block] (cnntokens) at (8.35,1.15) {49 visual tokens\\$d=512$};
+\node[input] (vitimage) at (0,-1.15) {Input image\\$224\times224$};
+\node[block] (vitencoder) at (2.65,-1.15) {ViT-B/16\\patch embedding + 12 layers};
+\node[block] (vitpatches) at (5.55,-1.15) {196 encoded patch tokens\\discard CLS};
+\node[block] (vittokens) at (8.35,-1.15) {Linear projection\\196 tokens, $d=512$};
+\node[block, text width=2.35cm, minimum height=1.35cm] (decoder) at (11.4,0) {Shared 2-layer Transformer decoder\\causal self-attention + cross-attention};
+\node[block, text width=1.75cm] (output) at (14.4,0) {Greedy caption\\vocabulary 2{,}004};
+\draw[arrow] (cnnimage) -- (cnnencoder);
+\draw[arrow] (cnnencoder) -- (cnngrid);
+\draw[arrow] (cnngrid) -- (cnntokens);
+\draw[arrow] (vitimage) -- (vitencoder);
+\draw[arrow] (vitencoder) -- (vitpatches);
+\draw[arrow] (vitpatches) -- (vittokens);
+\draw[arrow] (cnntokens.east) -- (decoder.west);
+\draw[arrow] (vittokens.east) -- (decoder.west);
+\draw[arrow] (decoder) -- (output);
+\end{tikzpicture}
+\caption{Compared encoder--decoder systems. Each decoder cross-attends to a sequence of projected visual tokens rather than a single pooled vector.}
+\label{fig:architecture}
+\end{figure*}
+
 \subsection{CNN-Based Captioning Model}
 
-The CNN encoder is a pretrained ResNet-50 \cite{he2016} with the final classification layer removed. The spatial feature map from the penultimate global average pooling layer produces a 2{,}048-dimensional vector, which is projected to a 512-dimensional embedding via a fully connected layer. This 512-dim vector serves as the memory for the Transformer decoder.
+The CNN encoder is an ImageNet-pretrained ResNet-50 \cite{he2016}. We remove its global average-pooling and classification layers and retain the final $7\times7$ feature grid with 2{,}048 channels. A learned $1\times1$ convolution projects each grid location to 512 dimensions, and a learned $7\times7$ 2-D position embedding is added. Flattening the grid yields 49 visual memory tokens of dimension 512 for decoder cross-attention.
 
 \subsection{Vision Transformer-Based Captioning Model}
 
-The ViT encoder is a pretrained ViT-B/16 \cite{dosovitskiy2021} that divides each $224\times224$ input image into $14\times14 = 196$ non-overlapping $16\times16$ patches. Each patch is linearly embedded and processed by 12 Transformer encoder layers with hidden dimension 768 and 12 attention heads. The classification token (CLS) output, which aggregates global scene information, produces a 768-dimensional representation that is projected to 512 dimensions via a linear layer.
+The ViT encoder is an ImageNet-pretrained ViT-B/16 \cite{dosovitskiy2021}. Each $224\times224$ image is divided into $14\times14=196$ non-overlapping $16\times16$ patches. The patch embeddings and CLS token are processed by 12 Transformer encoder layers with hidden dimension 768 and 12 attention heads. After encoding, the CLS token is excluded from decoder memory; each of the 196 patch tokens is projected from 768 to 512 dimensions by a shared linear layer. The pretrained ViT positional embeddings retain patch-location information.
 
 \subsection{Shared Transformer Decoder}
 
@@ -94,13 +126,37 @@ Both models use an identical caption decoder comprising:
     \item A two-layer Transformer decoder with 8 attention heads and model dimension $d_{\text{model}}=512$.
     \item A linear output projection from 512 to $|\mathcal{V}|$.
 \end{itemize}
-The decoder is trained with causal (autoregressive) masking and cross-attends to the encoder's projected feature vector as the memory context.
+The decoder is trained with a causal mask and cross-attends to either the 49-token ResNet memory or the 196-token ViT memory. Greedy decoding is used at inference with a maximum generation length of 50 tokens.
+
+\subsection{Parameter Counts and Trainable-Layer Status}
+
+Table~\ref{tab:param_status} reports architecture-level parameter counts and trainable-layer status for the final systems. Counts are obtained from the instantiated PyTorch modules used in training.
+
+\begin{table}[htbp]
+\caption{Parameter counts and trainable status in final training}
+\label{tab:param_status}
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Component} & \textbf{ResNet System} & \textbf{ViT System} \\
+\midrule
+Encoder backbone params & 23,508,032 & 85,798,656 \\
+Encoder projection params & 1,074,176 & 393,728 \\
+Shared decoder params & 10,527,700 & 10,527,700 \\
+Total params & 35,109,908 & 96,720,084 \\
+Trainable encoder layers & All layers & All layers \\
+Trainable decoder layers & All layers & All layers \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both encoders are initialized with ImageNet-pretrained weights and fully fine-tuned. No encoder blocks are frozen. The CNN projection count includes the learned 2-D position embedding; the ViT backbone count excludes the removed classification head.
 
 \section{Experimental Setup}
 
 \subsection{Dataset}
 
-Both models are trained and evaluated on the Flickr30k dataset \cite{young2014}, which contains 31{,}014 images each annotated with five reference captions. The standard Karpathy split is used: 29{,}000 training images, 1{,}014 validation images, and 1{,}000 test images.
+Both models are trained and evaluated on Flickr30k \cite{young2014}, which contains 31{,}783 images. The supplied Karpathy split uses 31{,}014 of these images: 29{,}000 training images, 1{,}014 validation images, and 1{,}000 test images. A programmatic audit confirmed that each notebook's split names matched the supplied JSON, that the splits had no overlap, and that test images had image and caption files.
 
 \subsection{Vocabulary}
 
@@ -108,21 +164,35 @@ A shared vocabulary is constructed from the training captions using word-level t
 
 \subsection{Image Preprocessing}
 
-All images are resized to $224\times224$ pixels and normalized using ImageNet statistics (mean $[0.485, 0.456, 0.406]$, standard deviation $[0.229, 0.224, 0.225]$). No data augmentation is applied during training.
+Each image is loaded in RGB mode, resized to $224\times224$, converted to tensor, and normalized using ImageNet statistics (mean $[0.485, 0.456, 0.406]$, standard deviation $[0.229, 0.224, 0.225]$). No geometric or color augmentation is used. For text, captions are lowercased and tokenized using NLTK \texttt{word\_tokenize}. Sequences are wrapped with \texttt{<SOS>} and \texttt{<EOS>}, mapped with the shared vocabulary, and padded dynamically per mini-batch using \texttt{<PAD>} for loss masking.
+
+\subsection{Data Loader and Batching Details}
+
+Training, validation, and test data loaders use batch size 16 with \texttt{shuffle=True} for training and \texttt{shuffle=False} for validation/test. A custom \texttt{collate\_fn} stacks images and keeps raw caption lists for on-the-fly token processing. Because \texttt{num\_workers}, \texttt{pin\_memory}, and \texttt{persistent\_workers} are not explicitly set, PyTorch defaults are used (single-process loading and no pinned host memory), so measured epoch times include host-side data loading overhead.
 
 \subsection{Training Configuration}
 
-Both models are optimized using Adam with differential learning rates and weight decay selected through a preliminary Optuna-based hyperparameter search. For each model, 15 tuning trials are run for 2 epochs per trial, searching over encoder learning rate, projection learning rate, decoder learning rate, dropout, and weight decay. The selected ResNet configuration is: dropout $=0.1498$, encoder LR $=4.123\times10^{-5}$, projection LR $=2.6975\times10^{-4}$, decoder LR $=1.9844\times10^{-4}$, and weight decay $=4.208\times10^{-7}$. The selected ViT configuration is: dropout $=0.3234$, encoder LR $=3.293\times10^{-6}$, projection LR $=6.261\times10^{-5}$, decoder LR $=2.4166\times10^{-4}$, and weight decay $=5.762\times10^{-6}$. The loss function is cross-entropy with padding positions ignored. Final training uses a batch size of 16, a maximum of 100 epochs, and early stopping with patience of 5 epochs and a minimum improvement threshold of $1\times10^{-4}$ on the validation loss. All experiments are run on a Kaggle cloud instance equipped with a Tesla P100 16\,GB GPU (CUDA 12.8, PyTorch 2.10.0, Python 3.12).
+Both models use Adam with differential learning rates and weight decay selected by Optuna \cite{optuna2019}. Each search used 15 trials of two epochs and searched dropout, encoder learning rate, projection learning rate, decoder learning rate, and weight decay. The selected ResNet settings were dropout $=0.1386$, encoder LR $=1.5291\times10^{-5}$, projection LR $=2.63296\times10^{-4}$, decoder LR $=3.09012\times10^{-4}$, and weight decay $=4.39470\times10^{-6}$. The selected ViT settings were dropout $=0.0488$, encoder LR $=6.9389\times10^{-6}$, projection LR $=5.4120\times10^{-5}$, decoder LR $=4.05780\times10^{-4}$, and weight decay $=1.08423\times10^{-6}$. Cross-entropy loss uses \texttt{ignore\_index=0} for padding. Final training uses batch size 16, at most 100 epochs, early-stopping patience 5, and minimum validation-loss improvement $10^{-4}$. Both final runs use seed 42. The Adam optimizer was used in both final runs; the decoder feed-forward dimension is 2{,}048 (PyTorch default). The runs used Python 3 and PyTorch 2 in Kaggle Tesla T4 CUDA environments; minor package versions differed between CNN and ViT sessions. The scripts use one default CUDA device and do not use data parallelism.
+
+\subsection{Random Seeds and Determinism}
+
+The training scripts seed Python \texttt{random}, NumPy, PyTorch CPU, and CUDA generators with 42; Optuna uses \texttt{TPESampler(seed=42)}. Fully deterministic CuDNN/CUDA flags were not enabled. The search used the same 15-trial, two-epoch budget for both models. The short trial horizon may not predict performance at full training length, particularly for the ViT's smaller encoder learning rate. Only one final seed was run per architecture, so the results do not estimate run-to-run variability.
+
+\subsection{Timing Protocol and Hardware Utilization Reporting}
+
+Reported final-training times exclude Optuna tuning and include the training loop through early stopping. Epoch time includes training, validation, and data-loading/preprocessing overhead. The reported effective throughput divides 29{,}000 training images by this full epoch time and is therefore an implementation-level proxy, not isolated training throughput. Greedy-decoding latency is averaged over 1{,}000 test images. Peak GPU memory was not recorded.
 
 \section{Evaluation Metrics}
 
-Caption quality is measured using four standard automatic metrics computed on the 1{,}000-image test set:
+Caption quality is measured on the 1{,}000-image test set with the \texttt{pycocoevalcap} BLEU, METEOR, ROUGE, and CIDEr scorers \cite{chen2015coco}. Captions are lowercased and tokenized with NLTK \texttt{word\_tokenize}; tokenized reference strings and generated vocabulary tokens are passed to the scorers. This implementation and tokenization should be considered when comparing scores from other toolkits.
+
+Reference-free image--text measures such as CLIPScore can provide complementary evidence, but are not computed in this study \cite{clipscore2021}.
 
 \textbf{BLEU} (Bilingual Evaluation Understudy) measures n-gram precision between generated and reference captions with a brevity penalty. We report BLEU-1 through BLEU-4 \cite{papineni2002}.
 
 \textbf{METEOR} (Metric for Evaluation of Translation with Explicit ORdering) computes an F-score based on unigram alignment between hypothesis and reference, incorporating stemming and synonym matching \cite{banerjee2005}.
 
-\textbf{ROUGE-L} (Recall-Oriented Understudy for Gisting Evaluation -- Longest Common Subsequence) measures the longest common subsequence between generated and reference captions, rewarding fluency at the sentence level \cite{lin2004}.
+\textbf{ROUGE-L} (Recall-Oriented Understudy for Gisting Evaluation -- Longest Common Subsequence) measures longest-common-subsequence overlap between generated and reference captions, combining sequence-level precision and recall in an F-score \cite{lin2004}.
 
 \textbf{CIDEr} (Consensus-based Image Description Evaluation) computes TF-IDF-weighted n-gram similarity between a generated caption and the set of reference captions, rewarding descriptions that are both accurate and consensus-aligned \cite{vedantam2015}.
 
@@ -132,7 +202,7 @@ Inference latency is measured as the average wall-clock time per image on the te
 
 \subsection{Caption Quality}
 
-Table~\ref{tab:results} reports caption quality scores on the 1{,}000 Flickr30k test images. The ViT-based model is slightly higher on BLEU-1 through BLEU-3, while the ResNet-50 model performs better on BLEU-4, METEOR, ROUGE-L, and CIDEr.
+Table~\ref{tab:results} reports scores on the 1{,}000 Flickr30k test images. The ViT point estimates are higher on all seven metrics. To quantify test-set sampling uncertainty, we performed 1{,}000 paired bootstrap resamples using NumPy seed 42: each replicate samples 1{,}000 image IDs with replacement and uses the same IDs for both systems. Table~\ref{tab:bootstrap} reports percentile 95\% confidence intervals for the score difference (ViT minus CNN). The unadjusted intervals exclude zero for BLEU-3 and BLEU-4 only. This paired test-set bootstrap does not account for training randomness because only one checkpoint per architecture was evaluated; the intervals are exploratory and no correction for testing seven metrics was applied.
 
 \begin{table}[htbp]
 \caption{Caption quality comparison on Flickr30k test set (1{,}000 images)}
@@ -142,20 +212,39 @@ Table~\ref{tab:results} reports caption quality scores on the 1{,}000 Flickr30k 
 \toprule
 \textbf{Metric} & \textbf{ResNet-50} & \textbf{ViT-B/16} \\
 \midrule
-BLEU-1  & 0.6512 & \textbf{0.6592} \\
-BLEU-2  & 0.4408 & \textbf{0.4450} \\
-BLEU-3  & 0.3009 & \textbf{0.3018} \\
-BLEU-4  & \textbf{0.2074} & 0.2045 \\
-METEOR  & \textbf{0.1993} & 0.1984 \\
-ROUGE-L & \textbf{0.4951} & 0.4914 \\
-CIDEr   & \textbf{0.4263} & 0.4137 \\
+BLEU-1  & 0.6441 & \textbf{0.6482} \\
+BLEU-2  & 0.4373 & \textbf{0.4505} \\
+BLEU-3  & 0.3008 & \textbf{0.3173} \\
+BLEU-4  & 0.2098 & \textbf{0.2251} \\
+METEOR  & 0.1954 & \textbf{0.1992} \\
+ROUGE-L & 0.4886 & \textbf{0.4964} \\
+CIDEr   & 0.4192 & \textbf{0.4424} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]
+\caption{Paired bootstrap intervals for metric differences (ViT minus CNN)}
+\label{tab:bootstrap}
+\centering
+\begin{tabular}{lcc}
+\toprule
+\textbf{Metric} & \textbf{Difference} & \textbf{95\% CI} \\
+\midrule
+BLEU-1 & $+0.0041$ & [$-0.0125$, $+0.0207$] \\
+BLEU-2 & $+0.0132$ & [$-0.0027$, $+0.0278$] \\
+BLEU-3 & $+0.0165$ & [$+0.0023$, $+0.0294$] \\
+BLEU-4 & $+0.0152$ & [$+0.0022$, $+0.0278$] \\
+METEOR & $+0.0038$ & [$-0.0018$, $+0.0090$] \\
+ROUGE-L & $+0.0078$ & [$-0.0009$, $+0.0165$] \\
+CIDEr & $+0.0232$ & [$-0.0058$, $+0.0540$] \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \subsection{Computational Efficiency}
 
-Table~\ref{tab:compute} summarizes the computational characteristics of both models. The ResNet-50-based system converges significantly faster in both epochs and wall-clock time, while the ViT-B/16 model is substantially larger.
+Table~\ref{tab:compute} summarizes the computational characteristics of both models. ResNet-50 trained and decoded faster in this run; ViT-B/16 had more parameters and higher caption metric point estimates. Training times exclude Optuna search.
 
 \begin{table}[htbp]
 \caption{Computational efficiency comparison}
@@ -165,56 +254,99 @@ Table~\ref{tab:compute} summarizes the computational characteristics of both mod
 \toprule
 \textbf{Property} & \textbf{ResNet-50} & \textbf{ViT-B/16} \\
 \midrule
-Encoder weights      & 97.8\,MB   & 330\,MB    \\
-Training epochs      & 24          & 24          \\
-Best val.\ loss      & 2.4721      & 2.4163      \\
-Total training time  & 216.31\,min & 500.44\,min \\
-Avg.\ time / epoch   & $\approx$9.01\,min & $\approx$20.85\,min \\
-Avg.\ latency / image & 41.06\,ms & 41.35\,ms  \\
+Total parameters & 35.11\,M & 96.72\,M \\
+Training epochs & 22 & 22 \\
+Best val.\ loss & 2.7038 (epoch 17) & 2.6849 (epoch 17) \\
+Total training time & 188.50\,min & 492.27\,min \\
+Avg.\ end-to-end epoch time & 8.57\,min & 22.38\,min \\
+Effective throughput$^{*}$ & $\approx$56.4 img/s & $\approx$21.6 img/s \\
+Avg.\ latency / image & 36.01\,ms & 37.55\,ms \\
 \bottomrule
 \end{tabular}
 \end{table}
+\vspace{-1ex}
+{\footnotesize $^{*}$Effective throughput is training-image count divided by epoch time, which includes validation and data loading.}
 
 \subsection{Training Convergence}
 
-Both models begin with similar training losses (3.4188 for ResNet-50, 3.3862 for ViT-B/16 at epoch 1) and run for 24 epochs before early stopping. At epoch 24, the final training losses are 2.0400 (ResNet-50) and 2.1130 (ViT-B/16). The ViT model reaches a lower best validation loss (2.4163 vs.\ 2.4721), but this does not translate into better corpus-level test metrics in this run. The ResNet-50 encoder also reaches its final model in substantially less wall-clock time (216.31 vs.\ 500.44 minutes).
+Both models ran 22 epochs. ResNet-50's best validation loss was 2.7038 at epoch 17; ViT-B/16's was 2.6849 at epoch 17. Figure~\ref{fig:loss} shows that training loss continued to decline after validation loss began to level off, indicating a widening train--validation gap late in training. The best checkpoint was selected by validation loss and restored before test evaluation.
+
+\begin{figure*}[t]
+\centering
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/cnn_loss_curve_seed_42.png}
+    \centerline{(a) ResNet-50}
+\end{minipage}\hfill
+\begin{minipage}{0.48\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{figures/vit_loss_curve_seed_42.png}
+    \centerline{(b) ViT-B/16}
+\end{minipage}
+\caption{Training and validation cross-entropy by epoch for the final seed-42 runs. ViT validation loss reaches its minimum of 2.6849 at epoch 17.}
+\label{fig:loss}
+\end{figure*}
 
 \subsection{Qualitative Examples}
 
-Both models generate grammatically correct and semantically relevant captions for most test images. Qualitative inspection indicates that the two systems are often similar on simple scenes with one dominant subject, while differences are more noticeable on crowded or interaction-heavy images. These observations are consistent with the mixed quantitative results, where neither encoder dominates every metric.
+Figure~\ref{fig:qualitative} illustrates complementary errors on held-out images. For the running dog, the CNN hallucinates a ball, whereas ViT describes the dog and grass in agreement with the references. For the karate image, both outputs omit the board-breaking action and ViT misidentifies the participants' genders. On the roof-repair image, ViT's count of three people matches the references more closely than the CNN caption. These selected examples are illustrative, not a human evaluation or a representative estimate of error frequency.
+
+\begin{figure*}[t]
+\centering
+\begin{minipage}[t]{0.32\textwidth}
+    \centering
+    \includegraphics[width=0.96\linewidth,height=3.2cm,keepaspectratio]{figures/dog_running.jpg}
+    \par\scriptsize\textbf{Dog running.} Reference: ``A black and white dog is running through the grass.'' CNN generated: ``a dog jumps through the air to catch a ball.'' ViT generated: ``a black and white dog is running through the grass.''
+\end{minipage}\hfill
+\begin{minipage}[t]{0.32\textwidth}
+    \centering
+    \includegraphics[width=0.96\linewidth,height=3.2cm,keepaspectratio]{figures/karate_breaking.jpg}
+    \par\scriptsize\textbf{Karate board breaking.} Reference: ``A girl in karate uniform breaking a stick with a front kick.'' CNN generated: ``two people are competing in a martial arts competition.'' ViT generated: ``two men are practicing martial arts.''
+\end{minipage}\hfill
+\begin{minipage}[t]{0.32\textwidth}
+    \centering
+    \includegraphics[width=0.96\linewidth,height=3.2cm,keepaspectratio]{figures/roof_repair.jpg}
+    \par\scriptsize\textbf{Roof repair.} Reference: ``Three men, one on a ladder, work on a roof.'' CNN generated: ``two men are working on a rooftop.'' ViT generated: ``three people are working on a roof.''
+\end{minipage}
+\caption{One reference caption and the greedy model-generated captions for three Flickr30k test images. All text is taken from the evaluation export. The first example shows an unsupported object hallucination by CNN; the second shows action and attribute errors; the third illustrates a difference in object counting.}
+\label{fig:qualitative}
+\end{figure*}
 
 \section{Discussion}
 
 \subsection{Caption Quality}
 
-The updated results show a split behavior across metrics. ViT-B/16 yields slightly higher BLEU-1 to BLEU-3 scores, which suggests stronger short n-gram overlap with references. However, ResNet-50 performs better on BLEU-4 ($+0.0029$), METEOR ($+0.0009$), ROUGE-L ($+0.0037$), and CIDEr ($+0.0126$), indicating stronger higher-order phrase consistency and better consensus with human references in this experiment. Overall, the gains are modest but coherent enough to favor ResNet-50 on aggregate caption quality.
+In this token-sequence experiment, ViT-B/16 has higher point estimates on all seven automatic metrics, with the largest absolute differences on CIDEr ($+0.0232$) and BLEU-4 ($+0.0152$). The paired bootstrap intervals exclude zero for BLEU-3 and BLEU-4, while intervals for BLEU-1, BLEU-2, METEOR, ROUGE-L, and CIDEr include zero. These are unadjusted test-set intervals for fixed checkpoints; they neither measure seed-to-seed variation nor justify a broad quality-superiority claim. Multi-seed training remains necessary to assess whether the observed differences are robust.
 
 \subsection{Computational Trade-offs}
 
-Even with tuned hyperparameters, the ViT encoder introduces substantial computational overhead. The ViT-B/16 pretrained weights are 3.4$\times$ larger than ResNet-50 (330\,MB vs.\ 97.8\,MB), and the per-epoch training time is approximately 2.3$\times$ longer (20.85 vs.\ 9.01\,min), resulting in a total training time overhead of about 2.31$\times$ (500.44 vs.\ 216.31\,min). This difference is consistent with the higher computational burden of patch-level self-attention compared to convolutional feature extraction. Inference latency remains very similar for both models (41.35 vs.\ 41.06\,ms per image), so the main practical cost difference appears during training rather than deployment-time inference.
+ViT-B/16 has about 2.76$\times$ as many parameters as the ResNet-50 system (96.72M vs.\ 35.11M). Its final training run took 2.61$\times$ as long (492.27 vs.\ 188.50 minutes), while its measured greedy latency was 1.04$\times$ higher (ViT: 37.55; ResNet: 36.01\,ms/image). Both latency values were measured on the same Tesla T4 evaluation environment. Peak memory was not captured, so parameter count and wall-clock measurements should not be taken as a direct memory or deployment-footprint measurement.
 
 \subsection{Data Efficiency and Inductive Bias}
 
-Flickr30k provides only 29{,}000 training images, a moderate-scale dataset by modern standards. CNNs embed two forms of inductive bias---locality (each filter covers a limited receptive field) and translation equivariance---that allow them to learn effective visual representations from relatively few examples. ViTs lack these biases and instead learn global spatial relationships more directly from data, which often requires larger datasets or stronger regularization to fully surpass CNNs \cite{dosovitskiy2021}. In this study, ViT-B/16 attains lower best validation loss, but ResNet-50 yields better BLEU-4/METEOR/ROUGE-L/CIDEr on the held-out test set. This suggests that on moderate-scale captioning data, CNN inductive biases still provide a meaningful generalization advantage.
+Flickr30k supplies 29{,}000 training images in the selected split. The CNN grid and ViT patch sequence preserve spatially indexed features for cross-attention, but this experiment does not isolate inductive bias from the pretrained encoders, token count, optimization, or compute. The validation and test point estimates favor ViT on this run; no conclusion about generalization to larger or out-of-domain datasets follows without additional experiments.
+
+\subsection{Practical and Societal Considerations}
+
+Image captioning can support image search and assistive access for people who are blind or have low vision. However, an inaccurate caption can mislead a listener; the examples in Fig.~\ref{fig:qualitative} include an unsupported object and errors about an action or attribute. We did not conduct human assessment with intended users, so these results do not demonstrate accessibility, factual reliability, or deployment readiness. Future evaluation should measure correctness, relevance, and usefulness with human raters and diverse images.
 
 \subsection{Implications for Deployment}
 
-For applications where training efficiency and practical model size are important, ResNet-50 is the more favorable encoder in this setup: it trains over 2$\times$ faster, uses much smaller encoder weights, and also achieves stronger BLEU-4, METEOR, ROUGE-L, and CIDEr. ViT-B/16 remains competitive and may still be attractive when short n-gram precision is prioritized or when scaling to much larger pretraining and finetuning datasets. In this experiment, however, the CNN-based encoder offers the stronger overall deployment trade-off.
+For this implementation, ResNet-50 is faster to fine-tune and has fewer parameters, while ViT-B/16 obtains higher automatic caption scores at a higher training and inference cost. Selecting between them therefore depends on the deployment's quality, compute, and latency requirements. The single T4 result is not sufficient to generalize to other hardware or real-world image distributions.
 
 \section{Conclusion and Future Work}
 
-This paper presented a controlled comparative study of ResNet-50 and ViT-B/16 visual encoders within an identical encoder-decoder image captioning framework. Both models were trained and evaluated on Flickr30k under matched data and decoder conditions with tuned optimization settings. The ViT-B/16 encoder achieved slightly higher BLEU-1 to BLEU-3, but ResNet-50 achieved stronger BLEU-4 (0.2074 vs.\ 0.2045), METEOR (0.1993 vs.\ 0.1984), ROUGE-L (0.4951 vs.\ 0.4914), and CIDEr (0.4263 vs.\ 0.4137). ResNet-50 also reduced total training time by approximately 2.31$\times$ (216.31 vs.\ 500.44 minutes) with a 3.4$\times$ smaller encoder footprint, while inference latency remained comparable.
-
-These results indicate that, for Flickr30k-scale captioning, CNN inductive biases still provide a strong quality-efficiency balance relative to ViT-based encoding, even when both systems are tuned and trained under a unified framework.
-
-Future work will explore: (i) scaling to larger datasets such as MS COCO or CC3M to assess whether ViT's quality advantage widens with more data; (ii) beam search decoding to improve caption fluency for both models; (iii) attention map visualization to interpret which image regions each encoder emphasizes; (iv) fine-tuning BLIP-2 \cite{li2023} as a strong baseline for comparison; and (v) investigating encoder choices specifically for reducing hallucination, guided by evaluation protocols such as POPE \cite{li2023pope}.
+This paper compared ResNet-50 grid tokens and ViT-B/16 patch tokens with a shared Transformer decoder. On one seed and the Flickr30k Karpathy split, ViT had higher metric point estimates, while ResNet trained and decoded faster with fewer parameters. For these fixed checkpoints, unadjusted test-image bootstrap intervals exclude zero for BLEU-3 and BLEU-4; one seed does not establish run-to-run robustness, human preference, factual accuracy, or generalization. Future work should use multiple seeds, account for both seed and image uncertainty and multiple metric comparisons, conduct human and factuality evaluation, measure peak memory, and test additional datasets. A clearly identified BLIP-2 baseline is another useful comparison \cite{li2023,li2023pope}.
 
 \bibliographystyle{IEEEtran}
 \bibliography{main}
 
 \appendices
-\section{Code Link}
+\section{Code and Reproducibility Information}
 
-\url{https://github.com/PradipPokhrel55/caption_generator}
+\begingroup\footnotesize
+Source code, checkpoints, and manuscript: \url{https://github.com/PradipPokhrel55/caption_generator}.\\
+Kaggle runs: HPO \url{https://www.kaggle.com/code/pradippokhrel77/vit-hpo}; CNN training \url{https://www.kaggle.com/code/pradippokhrel45/cnn-transformer}; ViT training \url{https://www.kaggle.com/code/pradippokhrel45/vit-traning}; evaluation/bootstrap \url{https://www.kaggle.com/code/pradippokhrel45/evaluation-caption-generation}.
+\endgroup
 
 \end{document}
